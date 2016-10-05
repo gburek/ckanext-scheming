@@ -196,6 +196,7 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
     p.implements(p.IDatasetForm, inherit=True)
     p.implements(p.IActions)
     p.implements(p.IValidators)
+    p.implements(p.IConfigurable)
 
     SCHEMA_OPTION = 'scheming.dataset_schemas'
     FALLBACK_OPTION = 'scheming.dataset_fallback'
@@ -261,6 +262,20 @@ class SchemingDatasetsPlugin(p.SingletonPlugin, DefaultDatasetForm,
             'scheming_dataset_schema_list': scheming_dataset_schema_list,
             'scheming_dataset_schema_show': scheming_dataset_schema_show,
         }
+
+    def configure(self, config):
+        """ Iconfigurable """
+        self._alter_activity_changed_extra(config)
+
+    def _alter_activity_changed_extra(self, config):
+        """
+        #135 Replace '... changed extra "<field>..."' with '... changed dataset...'
+        """
+        if config.get('scheming.activity.no_extra_msg', False):
+            # Monkey patch CKAN activity string functions
+            from ckan.lib.activity_streams import activity_stream_string_functions as as_funcs
+            # /changed extra "camel_humps" in dataset /Changed dataset/
+            as_funcs['changed package_extra'] = as_funcs['changed package']
 
 
 class SchemingGroupsPlugin(p.SingletonPlugin, _GroupOrganizationMixin,
